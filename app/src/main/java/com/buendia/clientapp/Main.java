@@ -18,6 +18,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -35,6 +36,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -134,13 +136,54 @@ public class Main extends Activity {
                     e.printStackTrace();
                 }
 
+                JSONObject data = null;
                 try {
-                    JSONObject data = new JSONObject(content);
+                    data = new JSONObject(content);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
 
-                System.out.println(content);
+                JSONObject tabs = null;
+                if (data != null) {
+                    try {
+                        tabs =data.getJSONObject("tabs");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                JSONObject labels = null;
+                if (data != null) {
+                    try {
+                        labels = tabs.getJSONObject("labels");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                JSONArray order = null;
+                if (data != null) {
+                    try {
+                        order = tabs.getJSONArray("order");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+                int length = order.length();
+                String[] labelsInCorrectOrder = new String[length];
+                for (int i = 0; i < length; i++) {
+                    try {
+                        labelsInCorrectOrder[i] = labels.getString(Integer.toString(order.getInt(i)));
+                        System.out.println(labelsInCorrectOrder[i]);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+
                 Context context = getApplicationContext();
                 CharSequence text = "Downloading finished!";
                 int duration = Toast.LENGTH_SHORT;
