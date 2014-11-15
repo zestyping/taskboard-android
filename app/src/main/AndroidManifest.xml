@@ -17,11 +17,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".config"
+            android:name=".Config"
             android:label="@string/title_activity_config" >
         </activity>
         <activity
-            android:name=".group"
+            android:name=".Group"
             android:label="@string/title_activity_group" >
         </activity>
     </application>

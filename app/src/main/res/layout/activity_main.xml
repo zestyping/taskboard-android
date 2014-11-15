@@ -14,7 +14,8 @@
         android:text="Refresh"
         android:id="@+id/backToMain"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true" />
+        android:layout_alignParentRight="true"
+        android:onClick="refresh"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -22,7 +23,8 @@
         android:text="Config"
         android:id="@+id/config"
         android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/backToMain" />
+        android:layout_toLeftOf="@+id/backToMain"
+        android:onClick="config"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -30,7 +32,23 @@
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="The selected server address is:"
         android:id="@+id/serverAddress"
-        android:layout_above="@+id/config"
-        android:layout_toLeftOf="@+id/config" />
+        android:layout_above="@+id/config" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Groups:"
+        android:id="@+id/title"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/listView"
+        android:layout_below="@+id/title"
+        android:layout_above="@+id/serverAddress"
+        android:layout_alignParentRight="true" />
 
 </RelativeLayout>
