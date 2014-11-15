@@ -5,12 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
@@ -22,31 +21,27 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
-
 public class Main extends Activity {
+
+    String ip = "54.69.215.38:5000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        new MainUpdateAsyncTask().execute(ip);
+        final TextView titleTextView = (TextView) findViewById(R.id.selectedIp);
+        titleTextView.setText("The selected server address is: " + ip);
     }
+
     private class StableArrayAdapter extends ArrayAdapter<String> {
 
         HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
@@ -73,7 +68,7 @@ public class Main extends Activity {
     }
 
     public void refresh(View view) {
-        new MainUpdateAsyncTask().execute("54.69.215.38:5000");
+        new MainUpdateAsyncTask().execute(ip);
     }
 
     public void config(View view) {
@@ -81,7 +76,7 @@ public class Main extends Activity {
         startActivity(intent);
     }
 
-    public class MainUpdateAsyncTask extends AsyncTask<String,Void,HttpResponse> {
+    public class MainUpdateAsyncTask extends AsyncTask<String, Void, HttpResponse> {
 
         @Override
         protected HttpResponse doInBackground(String... params) {
@@ -117,14 +112,21 @@ public class Main extends Activity {
                 CharSequence text = "Downloading failed!";
                 int duration = Toast.LENGTH_SHORT;
 
-                Toast refreshingToast = Toast.makeText(context,text,duration);
+                Toast refreshingToast = Toast.makeText(context, text, duration);
                 refreshingToast.show();
 
             } else {
 
+                Context context = getApplicationContext();
+                CharSequence text = "Downloading finished!";
+                int duration = Toast.LENGTH_SHORT;
+
+                Toast refreshingToast = Toast.makeText(context, text, duration);
+                refreshingToast.show();
+
                 InputStream inputStream = null;
                 try {
-                    inputStream  = result.getEntity().getContent();
+                    inputStream = result.getEntity().getContent();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -146,7 +148,7 @@ public class Main extends Activity {
                 JSONObject tabs = null;
                 if (data != null) {
                     try {
-                        tabs =data.getJSONObject("tabs");
+                        tabs = data.getJSONObject("tabs");
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -170,37 +172,22 @@ public class Main extends Activity {
                     }
                 }
 
-
                 int length = order.length();
                 String[] labelsInCorrectOrder = new String[length];
                 for (int i = 0; i < length; i++) {
                     try {
                         labelsInCorrectOrder[i] = labels.getString(Integer.toString(order.getInt(i)));
-                        System.out.println(labelsInCorrectOrder[i]);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
 
-
-
-                Context context = getApplicationContext();
-                CharSequence text = "Downloading finished!";
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast refreshingToast = Toast.makeText(context, text, duration);
-                refreshingToast.show();
-
-                String[] values = new String[]{"Android", "iPhone", "WindowsMobile",
-                        "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-                        "Linux", "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux",
-                        "OS/2", "Ubuntu", "Windows7", "Max OS X", "Linux", "OS/2",
-                        "Android", "iPhone", "WindowsMobile"};
-
                 final ArrayList<String> list = new ArrayList<String>();
-                for (int i = 0; i < values.length; ++i) {
-                    list.add(values[i]);
+                for (int i = 0; i < labelsInCorrectOrder.length; ++i) {
+                    list.add(labelsInCorrectOrder[i]);
                 }
+                list.add("All");
+
                 final StableArrayAdapter adapter = new StableArrayAdapter(getBaseContext(),
                         android.R.layout.simple_list_item_1, list);
                 final ListView listview = (ListView) findViewById(R.id.listView);
@@ -211,8 +198,11 @@ public class Main extends Activity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, final View view,
                                             int position, long id) {
-                        final String item = (String) parent.getItemAtPosition(position);
-
+                        final String groupName = (String) parent.getItemAtPosition(position);
+                        Intent intent = new Intent(getBaseContext(), Group.class);
+                        intent.putExtra("GROUP_NAME", groupName);
+                        intent.putExtra("IP", ip);
+                        startActivity(intent);
                     }
 
                 });
@@ -225,7 +215,7 @@ public class Main extends Activity {
             CharSequence text = "Started downloading the new content!";
             int duration = Toast.LENGTH_SHORT;
 
-            Toast refreshingToast = Toast.makeText(context,text,duration);
+            Toast refreshingToast = Toast.makeText(context, text, duration);
             refreshingToast.show();
 
         }
@@ -236,4 +226,4 @@ public class Main extends Activity {
         }
     }
 
-    }
+}

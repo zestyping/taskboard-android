@@ -38,6 +38,10 @@
     <GridView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:numColumns="auto_fit"
+        android:gravity="center"
+        android:columnWidth="100dp"
+        android:stretchMode="columnWidth"
         android:id="@+id/gridView"
         android:layout_below="@+id/title"
         android:layout_above="@+id/backToMain"

@@ -29,10 +29,11 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="The selected server address is:"
-        android:id="@+id/serverAddress"
-        android:layout_above="@+id/config" />
+        android:text="New Text"
+        android:id="@+id/selectedIp"
+        android:layout_above="@+id/config"
+        android:layout_alignRight="@+id/backToMain"
+        android:layout_alignParentLeft="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -48,7 +49,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/listView"
         android:layout_below="@+id/title"
-        android:layout_above="@+id/serverAddress"
-        android:layout_alignParentRight="true" />
+        android:layout_alignParentLeft="true"
+        android:layout_above="@+id/selectedIp"
+        android:layout_alignRight="@+id/selectedIp" />
 
 </RelativeLayout>
