@@ -7,14 +7,11 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,12 +29,16 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-
+import java.util.List;
 
 public class Group extends Activity {
 
     private String groupName;
     private String ip;
+    List<String> names;
+    private int selectedGroup;
+    private List<String>status = new ArrayList<String>();
+    JSONObject labels = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +48,7 @@ public class Group extends Activity {
         Intent intent = getIntent();
         this.groupName = intent.getStringExtra("GROUP_NAME");
         this.ip = intent.getStringExtra("IP");
+        this.selectedGroup = intent.getIntExtra("POSITION",0);
         final TextView titleTextView = (TextView) findViewById(R.id.title);
         titleTextView.setText(groupName);
     }
@@ -57,6 +59,7 @@ public class Group extends Activity {
     }
 
     public void refresh(View view) {
+
         new GroupUpdateAsyncTask().execute(ip);
     }
 
@@ -122,13 +125,6 @@ public class Group extends Activity {
 
             } else {
 
-                Context context = getApplicationContext();
-                CharSequence text = "Downloading finished!";
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast refreshingToast = Toast.makeText(context, text, duration);
-                refreshingToast.show();
-
                 InputStream inputStream = null;
                 try {
                     inputStream = result[0].getEntity().getContent();
@@ -159,7 +155,6 @@ public class Group extends Activity {
                     }
                 }
 
-                JSONObject labels = null;
                 if (data != null) {
                     try {
                         labels = cells.getJSONObject("labels");
@@ -177,8 +172,30 @@ public class Group extends Activity {
                     }
                 }
 
+                List<String> orderState = new ArrayList<String>();
+                for (int i = 0; i < layout.length();i++) {
+                    try {
+                        for (int j = 0; j < layout.getJSONArray(i).length();j++) {
+                            orderState.add(layout.getJSONArray(i).getString(j));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                names = new ArrayList<String>();
+                for (int i = 0; i<orderState.size();i++) {
+                    try {
+                        names.add(labels.getString(orderState.get(i)));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
                 int cellsPerRow = 0;
                 if (layout.length() == 0) {
+                    Context context = getApplicationContext();
+                    int duration = Toast.LENGTH_SHORT;
                     CharSequence error = "Downloading completed but there is nothing to show!";
                     Toast errorToast = Toast.makeText(context, error, duration);
                     errorToast.show();
@@ -189,6 +206,74 @@ public class Group extends Activity {
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                }
+
+                InputStream inputStreamState = null;
+                try {
+                    inputStreamState = result[1].getEntity().getContent();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                String contentState = inputStreamToString(inputStreamState);
+                try {
+                    inputStreamState.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                System.out.println(contentState);
+
+                JSONObject dataState = null;
+                try {
+                    dataState = new JSONObject(contentState);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+
+                JSONObject tabs = null;
+                if (data != null) {
+                    try {
+                        tabs = data.getJSONObject("tabs");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                JSONArray order = null;
+                if (data != null) {
+                    try {
+                        order = tabs.getJSONArray("order");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                int i=0;
+                try {
+                    for (i=0;i<order.length();i++) {
+                        JSONObject jsonObject = dataState.getJSONObject(order.getString(i));
+                        try {
+
+                        for (int j = 0; j < labels.length();j++) {
+                            status.add(jsonObject.getString(orderState.get(j)));
+                        }
+
+                        } catch (JSONException e) {
+                            status.add("0");
+                        }
+
+                    }
+                } catch (JSONException e) {
+                    for (int j = 0; j < labels.length();j++) {
+                        status.add("0");
+                    }
+                }
+
+                    for (int j = 0; j < status.size();j++) {
+                        System.out.println(Integer.toString(0) + " " + Integer.toString(j) + " " + status.get(j));
+
                 }
 
                 final GridView gridView = (GridView) findViewById(R.id.gridView);
@@ -202,8 +287,6 @@ public class Group extends Activity {
                 gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                         final TextView textView = (TextView) parent.getItemAtPosition(position);
-                        System.out.println(textView.getText());
-                        gridView.invalidateViews();
                     }
                 });
 
@@ -225,7 +308,7 @@ public class Group extends Activity {
 
             @Override
             public int getCount() {
-                return 0;
+                return names.size();
             }
 
             @Override
@@ -247,16 +330,27 @@ public class Group extends Activity {
                     textView.setGravity(Gravity.CENTER);
                     textView.setBackgroundColor(Color.parseColor("green"));
                     textView.setTextColor(Color.parseColor("black"));
-                    textView.setText("Alma");
-
-                } else{
-                    if (position == 2) {
-                        textView = (TextView) convertView;
-                        textView.setText("test");
-                    } else {
-                        textView = (TextView) convertView;
+                    textView.setText(names.get(position));
+                    if (selectedGroup == 0) {
+                        String currentStatus = status.get(position);
+                        if (currentStatus.equals("0")) {
+                            textView.setBackgroundColor(Color.parseColor("green"));
+                        } else {
+                            textView.setBackgroundColor(Color.parseColor("red"));
+                        }
                     }
 
+                    if (selectedGroup != 0) {
+                        String currentStatus = status.get(selectedGroup * labels.length() + position);
+                        if (currentStatus.equals("0")) {
+                            textView.setBackgroundColor(Color.parseColor("green"));
+                        } else {
+                            textView.setBackgroundColor(Color.parseColor("red"));
+                        }
+                    }
+
+                } else{
+                    textView = (TextView) convertView;
                 }
                 return textView;            }
         }

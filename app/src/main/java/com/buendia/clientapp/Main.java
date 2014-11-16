@@ -86,7 +86,6 @@ public class Main extends Activity {
             stringBuilder.append(params[0]);
             stringBuilder.append("/board");
             String url = stringBuilder.toString();
-            System.out.println(url);
 
             HttpResponse response = null;
             try {
@@ -116,13 +115,6 @@ public class Main extends Activity {
                 refreshingToast.show();
 
             } else {
-
-                Context context = getApplicationContext();
-                CharSequence text = "Downloading finished!";
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast refreshingToast = Toast.makeText(context, text, duration);
-                refreshingToast.show();
 
                 InputStream inputStream = null;
                 try {
@@ -201,6 +193,7 @@ public class Main extends Activity {
                         final String groupName = (String) parent.getItemAtPosition(position);
                         Intent intent = new Intent(getBaseContext(), Group.class);
                         intent.putExtra("GROUP_NAME", groupName);
+                        intent.putExtra("POSITION",position);
                         intent.putExtra("IP", ip);
                         startActivity(intent);
                     }
@@ -210,13 +203,6 @@ public class Main extends Activity {
         }
 
         protected void onPreExecute() {
-
-            Context context = getApplicationContext();
-            CharSequence text = "Started downloading the new content!";
-            int duration = Toast.LENGTH_SHORT;
-
-            Toast refreshingToast = Toast.makeText(context, text, duration);
-            refreshingToast.show();
 
         }
 
