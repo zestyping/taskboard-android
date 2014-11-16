@@ -38,8 +38,14 @@ public class Main extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         new MainUpdateAsyncTask().execute(ip);
+        Intent intent = getIntent();
+        String ip = intent.getStringExtra("IP");
+        if ( ip != null) {
+            this.ip = ip + ":5000";
+        }
         final TextView titleTextView = (TextView) findViewById(R.id.selectedIp);
-        titleTextView.setText("The selected server address is: " + ip);
+        titleTextView.setText("The selected server address is: " + this.ip);
+
     }
 
     private class StableArrayAdapter extends ArrayAdapter<String> {
@@ -68,6 +74,7 @@ public class Main extends Activity {
     }
 
     public void refresh(View view) {
+        final ListView listview = (ListView) findViewById(R.id.listView);
         new MainUpdateAsyncTask().execute(ip);
     }
 
@@ -178,7 +185,6 @@ public class Main extends Activity {
                 for (int i = 0; i < labelsInCorrectOrder.length; ++i) {
                     list.add(labelsInCorrectOrder[i]);
                 }
-                list.add("All");
 
                 final StableArrayAdapter adapter = new StableArrayAdapter(getBaseContext(),
                         android.R.layout.simple_list_item_1, list);

@@ -16,10 +16,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,8 +41,9 @@ public class Group extends Activity {
     private String ip;
     List<String> names;
     private int selectedGroup;
-    private List<String>status = new ArrayList<String>();
+    private List<String> status = new ArrayList<String>();
     JSONObject labels = null;
+    private String urlStatePost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,9 +53,11 @@ public class Group extends Activity {
         Intent intent = getIntent();
         this.groupName = intent.getStringExtra("GROUP_NAME");
         this.ip = intent.getStringExtra("IP");
-        this.selectedGroup = intent.getIntExtra("POSITION",0);
+        this.selectedGroup = intent.getIntExtra("POSITION", 0);
         final TextView titleTextView = (TextView) findViewById(R.id.title);
         titleTextView.setText(groupName);
+        status = new ArrayList<String>();
+        new GroupUpdateAsyncTask().execute(ip);
     }
 
     public void backToMain(View view) {
@@ -59,11 +66,14 @@ public class Group extends Activity {
     }
 
     public void refresh(View view) {
-
+        status = new ArrayList<String>();
         new GroupUpdateAsyncTask().execute(ip);
+
     }
 
     public class GroupUpdateAsyncTask extends AsyncTask<String, Void, HttpResponse[]> {
+
+
 
         @Override
         protected HttpResponse[] doInBackground(String... params) {
@@ -79,9 +89,10 @@ public class Group extends Activity {
             stringBuilderState.append(params[0]);
             stringBuilderState.append("/state");
             String urlState = stringBuilderState.toString();
-            
+            urlStatePost = urlState;
+
             HttpResponse[] response = {null, null}; //0 board, 1 state
-            
+
             try {
                 HttpClient client = new DefaultHttpClient();
                 HttpGet request = new HttpGet();
@@ -114,7 +125,7 @@ public class Group extends Activity {
 
         protected void onPostExecute(HttpResponse[] result) {
 
-            if (result[0] == null || result[1] ==null) {
+            if (result[0] == null || result[1] == null) {
 
                 Context context = getApplicationContext();
                 CharSequence text = "Downloading failed!";
@@ -172,10 +183,10 @@ public class Group extends Activity {
                     }
                 }
 
-                List<String> orderState = new ArrayList<String>();
-                for (int i = 0; i < layout.length();i++) {
+                final List<String> orderState = new ArrayList<String>();
+                for (int i = 0; i < layout.length(); i++) {
                     try {
-                        for (int j = 0; j < layout.getJSONArray(i).length();j++) {
+                        for (int j = 0; j < layout.getJSONArray(i).length(); j++) {
                             orderState.add(layout.getJSONArray(i).getString(j));
                         }
                     } catch (JSONException e) {
@@ -184,7 +195,7 @@ public class Group extends Activity {
                 }
 
                 names = new ArrayList<String>();
-                for (int i = 0; i<orderState.size();i++) {
+                for (int i = 0; i < orderState.size(); i++) {
                     try {
                         names.add(labels.getString(orderState.get(i)));
                     } catch (JSONException e) {
@@ -202,7 +213,7 @@ public class Group extends Activity {
                 } else {
                     //check the how many cells/row should it use
                     try {
-                        cellsPerRow = layout.getJSONArray(0).length()+1;
+                        cellsPerRow = layout.getJSONArray(0).length() + 1;
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -221,8 +232,6 @@ public class Group extends Activity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-                System.out.println(contentState);
 
                 JSONObject dataState = null;
                 try {
@@ -250,15 +259,15 @@ public class Group extends Activity {
                     }
                 }
 
-                int i=0;
+                int i = 0;
                 try {
-                    for (i=0;i<order.length();i++) {
+                    for (i = 0; i < order.length(); i++) {
                         JSONObject jsonObject = dataState.getJSONObject(order.getString(i));
                         try {
 
-                        for (int j = 0; j < labels.length();j++) {
-                            status.add(jsonObject.getString(orderState.get(j)));
-                        }
+                            for (int j = 0; j < labels.length(); j++) {
+                                status.add(jsonObject.getString(orderState.get(j)));
+                            }
 
                         } catch (JSONException e) {
                             status.add("0");
@@ -266,14 +275,12 @@ public class Group extends Activity {
 
                     }
                 } catch (JSONException e) {
-                    for (int j = 0; j < labels.length();j++) {
+                    for (int j = 0; j < labels.length(); j++) {
                         status.add("0");
                     }
                 }
 
-                    for (int j = 0; j < status.size();j++) {
-                        System.out.println(Integer.toString(0) + " " + Integer.toString(j) + " " + status.get(j));
-
+                for (int j = 0; j < status.size(); j++) {
                 }
 
                 final GridView gridView = (GridView) findViewById(R.id.gridView);
@@ -286,7 +293,29 @@ public class Group extends Activity {
 
                 gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                        final TextView textView = (TextView) parent.getItemAtPosition(position);
+                        String message = null;
+                        String currentStatus = null;
+                        if (selectedGroup == 0) {
+                            currentStatus = status.get(position);
+                            if (currentStatus.equals("0")) {
+                                message = "1";
+                            } else {
+                                message = "0";
+                            }
+                        }
+
+                        if (selectedGroup != 0) {
+                            currentStatus = status.get(selectedGroup * labels.length() + position);
+                            if (currentStatus.equals("0")) {
+                                message = "1";
+                            } else {
+                                message = "0";
+                            }
+                        }
+                            System.out.println("selected group: " + Integer.toString(selectedGroup+1) + " order state: " + orderState.get(position)  + " message: " + message);
+
+                            new PostAsyncTask().execute(Integer.toString(selectedGroup+1), orderState.get(position), message);
+
                     }
                 });
 
@@ -349,10 +378,68 @@ public class Group extends Activity {
                         }
                     }
 
-                } else{
+                } else {
                     textView = (TextView) convertView;
+                    if (selectedGroup == 0) {
+                        String currentStatus = status.get(position);
+                        if (currentStatus.equals("0")) {
+                            textView.setBackgroundColor(Color.parseColor("green"));
+                        } else {
+                            textView.setBackgroundColor(Color.parseColor("red"));
+                        }
+                    }
+
+                    if (selectedGroup != 0) {
+                        String currentStatus = status.get(selectedGroup * labels.length() + position);
+                        if (currentStatus.equals("0")) {
+                            textView.setBackgroundColor(Color.parseColor("green"));
+                        } else {
+                            textView.setBackgroundColor(Color.parseColor("red"));
+                        }
+                    }
                 }
-                return textView;            }
+                return textView;
+            }
+        }
+    }
+
+    public class PostAsyncTask extends AsyncTask<String, Void, HttpResponse> {
+
+        @Override
+        protected HttpResponse doInBackground(String... params) {
+            HttpResponse response = null;
+            try {
+                HttpClient client = new DefaultHttpClient();
+                HttpPost request = new HttpPost();
+                request.setURI(new URI(urlStatePost));
+
+                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
+                nameValuePairs.add(new BasicNameValuePair("tid", params[0]));
+                nameValuePairs.add(new BasicNameValuePair(params[1], params[2]));
+                request.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                response = client.execute(request);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return response;
+        }
+        protected void onPostExecute(HttpResponse result) {
+
+            if (result == null) {
+                Context context = getApplicationContext();
+                CharSequence text = "Status update failed!";
+                int duration = Toast.LENGTH_SHORT;
+
+                Toast refreshingToast = Toast.makeText(context, text, duration);
+                refreshingToast.show();
+            } else {
+                refresh(null);
+            }
         }
     }
 }

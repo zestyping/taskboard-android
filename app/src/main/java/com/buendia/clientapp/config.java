@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 
 public class Config extends Activity {
@@ -17,8 +18,10 @@ public class Config extends Activity {
     }
 
     public void save(View view) {
+        EditText ip = (EditText) findViewById(R.id.configIP);
         Intent intent = new Intent(this, Main.class);
-       // intent.putExtra("IP",)
+        intent.putExtra("IP",ip.getText().toString());
+        System.out.println(ip.getText().toString());
         startActivity(intent);
     }
 
