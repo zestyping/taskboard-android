@@ -18,7 +18,7 @@ public class Config extends Activity {
 
     public void save(View view) {
         Intent intent = new Intent(this, Main.class);
-        //TODO add the entered ip as extra to the intent
+       // intent.putExtra("IP",)
         startActivity(intent);
     }
 

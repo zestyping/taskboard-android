@@ -3,12 +3,17 @@ package com.buendia.clientapp;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,24 +60,30 @@ public class Group extends Activity {
         new GroupUpdateAsyncTask().execute(ip);
     }
 
-    public class GroupUpdateAsyncTask extends AsyncTask<String, Void, HttpResponse> {
+    public class GroupUpdateAsyncTask extends AsyncTask<String, Void, HttpResponse[]> {
 
         @Override
-        protected HttpResponse doInBackground(String... params) {
+        protected HttpResponse[] doInBackground(String... params) {
 
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append("http://");
-            stringBuilder.append(params[0]);
-            stringBuilder.append("/board");
-            String url = stringBuilder.toString();
-            System.out.println(url);
+            StringBuilder stringBuilderBoard = new StringBuilder();
+            stringBuilderBoard.append("http://");
+            stringBuilderBoard.append(params[0]);
+            stringBuilderBoard.append("/board");
+            String urlBoard = stringBuilderBoard.toString();
 
-            HttpResponse response = null;
+            StringBuilder stringBuilderState = new StringBuilder();
+            stringBuilderState.append("http://");
+            stringBuilderState.append(params[0]);
+            stringBuilderState.append("/state");
+            String urlState = stringBuilderState.toString();
+            
+            HttpResponse[] response = {null, null}; //0 board, 1 state
+            
             try {
                 HttpClient client = new DefaultHttpClient();
                 HttpGet request = new HttpGet();
-                request.setURI(new URI(url));
-                response = client.execute(request);
+                request.setURI(new URI(urlBoard));
+                response[0] = client.execute(request);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             } catch (ClientProtocolException e) {
@@ -80,13 +91,27 @@ public class Group extends Activity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
+            try {
+                HttpClient client = new DefaultHttpClient();
+                HttpGet request = new HttpGet();
+                request.setURI(new URI(urlState));
+                response[1] = client.execute(request);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return response;
         }
 
 
-        protected void onPostExecute(HttpResponse result) {
+        protected void onPostExecute(HttpResponse[] result) {
 
-            if (result == null) {
+            if (result[0] == null || result[1] ==null) {
 
                 Context context = getApplicationContext();
                 CharSequence text = "Downloading failed!";
@@ -106,7 +131,7 @@ public class Group extends Activity {
 
                 InputStream inputStream = null;
                 try {
-                    inputStream = result.getEntity().getContent();
+                    inputStream = result[0].getEntity().getContent();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -151,12 +176,89 @@ public class Group extends Activity {
                         e.printStackTrace();
                     }
                 }
+
+                int cellsPerRow = 0;
+                if (layout.length() == 0) {
+                    CharSequence error = "Downloading completed but there is nothing to show!";
+                    Toast errorToast = Toast.makeText(context, error, duration);
+                    errorToast.show();
+                } else {
+                    //check the how many cells/row should it use
+                    try {
+                        cellsPerRow = layout.getJSONArray(0).length()+1;
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                final GridView gridView = (GridView) findViewById(R.id.gridView);
+                gridView.setNumColumns(cellsPerRow);
+
+                gridView.setHorizontalSpacing(10);
+                gridView.setVerticalSpacing(10);
+
+                gridView.setAdapter(new BackgroundColorAdapter(getBaseContext()));
+
+                gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+                        final TextView textView = (TextView) parent.getItemAtPosition(position);
+                        System.out.println(textView.getText());
+                        gridView.invalidateViews();
+                    }
+                });
+
             }
         }
 
         private String inputStreamToString(InputStream inputStream) {
             java.util.Scanner s = new java.util.Scanner(inputStream).useDelimiter("\\A");
             return s.hasNext() ? s.next() : "";
+        }
+
+        public class BackgroundColorAdapter extends BaseAdapter {
+
+            private final Context context;
+
+            public BackgroundColorAdapter(Context context) {
+                this.context = context;
+            }
+
+            @Override
+            public int getCount() {
+                return 0;
+            }
+
+            @Override
+            public Object getItem(int position) {
+                return null;
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return 0;
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView textView;
+                if (convertView == null) {
+                    textView = new TextView(context);
+                    textView.setHeight(110);
+                    textView.setGravity(Gravity.CENTER);
+                    textView.setBackgroundColor(Color.parseColor("green"));
+                    textView.setTextColor(Color.parseColor("black"));
+                    textView.setText("Alma");
+
+                } else{
+                    if (position == 2) {
+                        textView = (TextView) convertView;
+                        textView.setText("test");
+                    } else {
+                        textView = (TextView) convertView;
+                    }
+
+                }
+                return textView;            }
         }
     }
 }

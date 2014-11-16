@@ -31,7 +31,7 @@ import java.util.List;
 
 public class Main extends Activity {
 
-    String ip = "54.69.215.38:5000";
+    String ip = "54.68.255.188:5000";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
